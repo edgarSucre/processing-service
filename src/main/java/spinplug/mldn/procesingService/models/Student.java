@@ -1,6 +1,10 @@
 package spinplug.mldn.procesingService.models;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+@JsonPropertyOrder({"firstName", "lastName", "age"})
 public class Student {
+
     private String firstName;
     private String lastName;
     private int age;
