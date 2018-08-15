@@ -2,6 +2,7 @@ package spinplug.mldn.procesingService.controlers;
 
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import spinplug.mldn.procesingService.models.EntityCollectionResponse;
 import spinplug.mldn.procesingService.models.Student;
 import spinplug.mldn.procesingService.services.ProcessCollectionService;
 
@@ -25,7 +26,7 @@ public class CollectionController {
     }
 
     @PostMapping("/students")
-    public List<Student> studentsCollectionFromCSV(@RequestParam("studentsFile") MultipartFile uploaded) {
+    public EntityCollectionResponse<Student> studentsCollectionFromCSV(@RequestParam("studentsFile") MultipartFile uploaded) {
         return service.getStudentsFromCSV(uploaded);
     }
 }

@@ -2,6 +2,7 @@ package spinplug.mldn.procesingService.services;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import spinplug.mldn.procesingService.models.EntityCollectionResponse;
 import spinplug.mldn.procesingService.models.Student;
 import spinplug.mldn.procesingService.parse.CSVParser;
 import java.util.List;
@@ -20,7 +21,7 @@ public class ProcessCollectionService {
         return csvParser.parseGenericCollectionFromFile(file);
     }
 
-    public List<Student> getStudentsFromCSV(MultipartFile file) {
+    public EntityCollectionResponse<Student> getStudentsFromCSV(MultipartFile file) {
         return csvParser.parseEntityCollectionFromFile(Student.class, file);
     }
 }

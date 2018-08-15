@@ -5,25 +5,47 @@ import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import spinplug.mldn.procesingService.models.EntityCollectionResponse;
+
+import java.util.*;
 
 @Component
 public class CSVParser implements ParserInterface{
 
-    public <T> List<T> parseEntityCollectionFromFile(Class<T> type, MultipartFile file) {
+    public <T> EntityCollectionResponse<T> parseEntityCollectionFromFile(Class<T> type, MultipartFile file) {
+        List<T> collection = new ArrayList<>();
+        List<Map<String,String>> failures = new ArrayList<>();
         try {
             //TODO: tried to inject csvMapper as a configured bean, but the response fails on controller
             CsvMapper csvMapper = new CsvMapper();
-            CsvSchema bootstrapSchema = csvMapper.schemaFor(type).withHeader();
+            CsvSchema headersSchema = csvMapper.schemaFor(type).withHeader();
+            CsvSchema emptySchema = CsvSchema.emptySchema().withHeader();
 
-            MappingIterator<T> readValues = csvMapper.readerFor(type).with(bootstrapSchema).readValues(file.getInputStream());
-            return readValues.readAll();
+            MappingIterator<T> entityValues = csvMapper
+                    .readerFor(type)
+                    .with(headersSchema)
+                    .readValues(file.getInputStream());
+
+            MappingIterator<Map<String,String>> dynamicValues = csvMapper
+                    .readerFor(Map.class)
+                    .with(emptySchema)
+                    .readValues(file.getInputStream());
+
+            while (entityValues.hasNext()) {
+
+                if (tryToExecute(entityValues, collection)) {
+                    tryToMoveNext(dynamicValues);
+                } else {
+                    tryToExecute(dynamicValues, failures);
+                }
+            }
+
+            EntityCollectionResponse<T> response = new EntityCollectionResponse<>(collection, failures);
+
+            return response;
         } catch (Exception e) {
             //TODO: log error on parsed type collection
-            return Collections.emptyList();
+            return new EntityCollectionResponse<>();
         }
     }
 
@@ -40,13 +62,32 @@ public class CSVParser implements ParserInterface{
                     .readValues(file.getInputStream());
 
             while (readValues.hasNext()) {
-                collection.add(readValues.next());
+                tryToExecute(readValues, collection);
             }
             return collection;
         }
         catch (Exception error) {
             //TODO: log error on generic parse
             return collection;
+        }
+    }
+
+    private boolean tryToExecute(Iterator looper, List collection) {
+       try {
+           collection.add(looper.next());
+       }
+       catch (Exception e) {
+           return false;
+       }
+       return true;
+    }
+
+    private void tryToMoveNext(Iterator looper) {
+        try {
+            looper.next();
+        }
+        catch (Exception e) {
+
         }
     }
 }
